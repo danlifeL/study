@@ -1,0 +1,59 @@
+from selenium import webdriver
+from time import sleep
+
+from selenium.webdriver.common.by import By
+
+# 第一个浏览器来进行登录，然后记录登录后的cookie
+driver = webdriver.Edge()
+driver.get("https://www.fhyx.com/account/passwordlogin.html?redirecturl=/index.html")
+sleep(3)
+#定位元素输入账号与密码
+driver.find_element(By.ID,"LoginForm_username").send_keys("18116686631")
+driver.find_element(By.ID,"LoginForm_password").send_keys("Zz5201314")
+# 手动在命令行中输入验证码
+code = input("验证码是：")
+
+driver.find_element(By.ID,"LoginForm_code").send_keys(code)
+sleep(1)
+#定位元素，点击登录
+driver.find_element(By.XPATH,"//button[text()='登   录']").click()
+sleep(3)
+#获取登录后的cookies
+cookie_login = driver.get_cookies()
+print("登陆后获取的cookie %s" % cookie_login)
+
+# 第二个新打开的浏览器用来添加cookie
+driver2 = webdriver.Edge()
+driver2.get("https://www.fhyx.com")
+sleep(2)
+
+# 循环赋值添加cookie
+# driver2.delete_all_cookies()
+for cookie in cookie_login:
+    cookie_list = {
+        'domain': '.fhyx.com',
+        'name': cookie["name"],
+        'value': cookie["value"],
+        "expires": "",
+        'path': '/',
+        'httpOnly': False,
+        'HostOnly': False,
+        'Secure': False,
+    }
+    print("添加cookie： %s  ： %s" % (cookie["name"], cookie["value"]))
+    driver2.add_cookie(cookie_list)
+
+driver.get("https://www.fhyx.com")
+sleep(1)
+# 获取单个cookie
+cookie_id = driver2.get_cookie("PHPSESSID")
+print("获取单个cookie：PHPSESSID：%s" % cookie_id)
+# 获取所有cookie
+cookie_all = driver2.get_cookies()
+print("已经添加的cookie个数 %s" % len(cookie_all))
+# 删除单个cookie
+# driver.delete_cookie("PHPSESSID")
+# print("删除PHPSESSID后查询此字段，结果： %s" % driver.get_cookie("PHPSESSID"))
+# 删除所有cookie（此时第一个浏览器cookie失效）
+# driver.delete_all_cookies()
+# print("全部删除后的cookie： %s " % driver.get_cookies())
